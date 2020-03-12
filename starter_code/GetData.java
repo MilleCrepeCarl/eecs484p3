@@ -74,10 +74,74 @@ public class GetData{
     public JSONArray toJSON() throws SQLException{ 
 
     	JSONArray users_info = new JSONArray();
-		
-	// Your implementation goes here....		
-    	
-		
+    	//Query the oracle
+        try (Statement stmt = oracleConnection.createStatement( ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_READ_ONLY)) {
+
+
+            // Select users and cities
+            ResultSet rst = stmt.executeQuery(
+                    "SELECT u.USER_ID,u.FIRST_NAME,u.LAST_NAME,u.YEAR_OF_BIRTH,u.MONTH_OF_BIRTH,u.DAY_OF_BIRTH, u.GENDER,c1.CITY_NAME, c1.STATE_NAME, c1.COUNTRY_NAME, c2.CITY_NAME, c2.STATE_NAME, c2.COUNTRY_NAME  " +
+                            "FROM " + userTableName + " u " +
+                            "left join " + currentCityTableName + " cc " +
+                            "on u.user_id=cc.user_id " +
+                            "left join " + hometownCityTableName + " hc " +
+                            "on u.user_id=hc.user_id " +
+                            "left join "+ cityTableName+" c1 "+
+                            "on cc.CURRENT_CITY_ID=c1.city_id "+
+                            "left join "+ cityTableName+" c2 "+
+                            "on hc.HOMETOWN_CITY_ID=c2.city_id "
+            );
+            
+            while (rst.next()) {
+
+                JSONObject curUserInfo=new JSONObject();
+                //Get Data from result
+                long UserID=rst.getLong(1);
+                String FirstName=rst.getString(2);
+                String LastName=rst.getString(3);
+                long YOB=Long.valueOf(rst.getString(4));
+                long MOB=Long.valueOf(rst.getString(5));
+                long DOB=Long.valueOf(rst.getString(6));
+                String Gender=rst.getString(7);
+                String CCity=rst.getString(8);
+                String CState=rst.getString(9);
+                String CCountry=rst.getString(10);
+                String HCity=rst.getString(11);
+                String HState=rst.getString(12);
+                String HCountry=rst.getString(13);
+                //Create current city JSON object
+                JSONObject Current=new JSONObject();
+                Current.put("city",CCity);
+                Current.put("country",CCountry);
+                Current.put("state",CState);
+                //Create hometown city JSON object
+                JSONObject Hometown=new JSONObject();
+                Hometown.put("city",HCity);
+                Hometown.put("country",HCountry);
+                Hometown.put("state",HState);
+                //put all information in JSON object
+                curUserInfo.put("current",Current);
+                curUserInfo.put("hometown",Hometown);
+                curUserInfo.put("gender",Gender);
+                curUserInfo.put("user_id",UserID);
+                curUserInfo.put("YOB",YOB);
+                curUserInfo.put("MOB",MOB);
+                curUserInfo.put("DOB",DOB);
+                curUserInfo.put("last_name", LastName);
+                curUserInfo.put("first_name", FirstName);
+                //TODO: get friends information,currently just set it blank
+                JSONArray Friends =new JSONArray();
+                curUserInfo.put("friends", Friends);
+                //append object into array
+                users_info.put(curUserInfo);
+            }
+
+            rst.close();
+            stmt.close();
+        }
+        catch (SQLException e) {
+            System.err.println(e.getMessage());
+        }
 		return users_info;
     }
 
