@@ -108,22 +108,26 @@ public class GetData{
                 long MOB=Long.valueOf(rst.getString(5));
                 long DOB=Long.valueOf(rst.getString(6));
                 String Gender=rst.getString(7);
+                //Create current city JSON object
+                JSONObject Current=new JSONObject();
                 String CCity=rst.getString(8);
                 String CState=rst.getString(9);
                 String CCountry=rst.getString(10);
+                if (!rst.wasNull()) {
+                    Current.put("city",CCity);
+                    Current.put("country",CCountry);
+                    Current.put("state",CState);
+                }
+                //Create hometown city JSON object
+                JSONObject Hometown=new JSONObject();
                 String HCity=rst.getString(11);
                 String HState=rst.getString(12);
                 String HCountry=rst.getString(13);
-                //Create current city JSON object
-                JSONObject Current=new JSONObject();
-                Current.put("city",CCity);
-                Current.put("country",CCountry);
-                Current.put("state",CState);
-                //Create hometown city JSON object
-                JSONObject Hometown=new JSONObject();
-                Hometown.put("city",HCity);
-                Hometown.put("country",HCountry);
-                Hometown.put("state",HState);
+                if (!rst.wasNull()) {
+                    Hometown.put("city",HCity);
+                    Hometown.put("country",HCountry);
+                    Hometown.put("state",HState);
+                }
                 //put all information in JSON object
                 curUserInfo.put("current",Current);
                 curUserInfo.put("hometown",Hometown);
@@ -134,13 +138,9 @@ public class GetData{
                 curUserInfo.put("DOB",DOB);
                 curUserInfo.put("last_name", LastName);
                 curUserInfo.put("first_name", FirstName);
-                //TODO: get friends information,currently just set it blank
-                // JSONArray Friends =new JSONArray();
-                // curUserInfo.put("friends", Friends);
-                //append object into array
-                // users_info.put(curUserInfo);
             }
 
+            //get friend information
             rst = stmt.executeQuery(
                     "SELECT f.USER1_ID, f.USER2_ID  " +
                             "FROM " + friendsTableName + " f " +
