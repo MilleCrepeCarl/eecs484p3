@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.TreeSet;
 import java.util.Vector;
+import java.util.HashMap;
 
 
 
@@ -18,13 +19,13 @@ import org.json.JSONObject;
 import org.json.JSONArray;
 
 public class GetData{
-	
+
     static String prefix = "project2.";
-	
+
     // You must use the following variable as the JDBC connection
     Connection oracleConnection = null;
-	
-    // You must refer to the following variables for the corresponding 
+
+    // You must refer to the following variables for the corresponding
     // tables in your database
 
     String cityTableName = null;
@@ -45,7 +46,7 @@ public class GetData{
     // DO NOT change the name
     JSONArray users_info = new JSONArray();		// declare a new JSONArray
 
-	
+
     // DO NOT modify this constructor
     public GetData(String u, Connection c) {
 	super();
@@ -64,16 +65,19 @@ public class GetData{
 	photoTableName = prefix+dataType+"_PHOTOS";
 	tagTableName = prefix+dataType+"_TAGS";
     }
-	
-	
-	
-	
+
+
+
+
     //implement this function
 
     @SuppressWarnings("unchecked")
-    public JSONArray toJSON() throws SQLException{ 
+    public JSONArray toJSON() throws SQLException{
 
     	JSONArray users_info = new JSONArray();
+
+        HashMap<Long, JSONObject> map = new HashMap<Long, JSONObject>();
+        HashMap<Long, JSONArray> map_friends = new HashMap<Long, JSONArray>();
     	//Query the oracle
         try (Statement stmt = oracleConnection.createStatement( ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_READ_ONLY)) {
 
@@ -91,10 +95,11 @@ public class GetData{
                             "left join "+ cityTableName+" c2 "+
                             "on hc.HOMETOWN_CITY_ID=c2.city_id "
             );
-            
+
             while (rst.next()) {
 
                 JSONObject curUserInfo=new JSONObject();
+                map.put(rst.getLong(1), curUserInfo);
                 //Get Data from result
                 long UserID=rst.getLong(1);
                 String FirstName=rst.getString(2);
@@ -130,11 +135,28 @@ public class GetData{
                 curUserInfo.put("last_name", LastName);
                 curUserInfo.put("first_name", FirstName);
                 //TODO: get friends information,currently just set it blank
-                JSONArray Friends =new JSONArray();
-                curUserInfo.put("friends", Friends);
+                // JSONArray Friends =new JSONArray();
+                // curUserInfo.put("friends", Friends);
                 //append object into array
-                users_info.put(curUserInfo);
+                // users_info.put(curUserInfo);
             }
+
+            rst = stmt.executeQuery(
+                    "SELECT f.USER1_ID, f.USER2_ID  " +
+                            "FROM " + friendsTableName + " f " +
+                            "WHERE f.USER1_ID < f.USER2_ID " +
+                            "ORDER BY USER1_ID, USER2_ID "
+            );
+
+            while(rst.next()){
+                long uid1=rst.getLong(1);
+                long uid2=rst.getLong(2);
+                if (!map_friends.containsKey(uid1)) {
+                    map_friends.put(uid1, new JSONArray());
+                }
+                map_friends.get(uid1).put(uid2);
+            }
+
 
             rst.close();
             stmt.close();
@@ -142,6 +164,18 @@ public class GetData{
         catch (SQLException e) {
             System.err.println(e.getMessage());
         }
+
+        for (Long uid : map.keySet()) {
+            JSONObject o = map.get(uid);
+            users_info.put(o);
+            if (map_friends.containsKey(uid)) {
+                o.put("friends", map_friends.get(uid));
+            }
+            else {
+                o.put("friends", new JSONArray());
+            }
+        }
+
 		return users_info;
     }
 
@@ -157,6 +191,6 @@ public class GetData{
 	} catch (IOException e) {
 	    e.printStackTrace();
 	}
-		
+
     }
 }
