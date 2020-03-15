@@ -3,8 +3,12 @@
 function find_user(city, dbname){
     db = db.getSiblingDB(dbname);
     var results = [];
-    // TODO: return a Javascript array of user_ids. 
-    // db.users.find(...);
+    // return a Javascript array of user_ids. 
+    db.users.find(
+    	{
+		"hometown.city": city	
+      	}
+    ).forEach(function(user){results.push(user.user_id);});
 
     // See test.js for a partial correctness check.  
     // The result will be an array of integers. The order does not matter.                                                               
