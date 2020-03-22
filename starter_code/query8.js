@@ -5,12 +5,10 @@
 
 var city_average_friendcount_mapper = function() {
   // implement the Map function of average friend count
-  emit(this.MOB,this.friends.length);
 };
 
 var city_average_friendcount_reducer = function(key, values) {
   // implement the reduce function of average friend count
-  return Array.sum(values)/values.length;
 };
 
 var city_average_friendcount_finalizer = function(key, reduceVal) {
