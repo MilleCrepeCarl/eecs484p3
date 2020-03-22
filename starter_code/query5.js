@@ -8,8 +8,90 @@
 
 function oldest_friend(dbname){
   db = db.getSiblingDB(dbname);
-  var results = {};
   // TODO: implement oldest friends
   // return an javascript object described above
-  return results
+  db.users.aggregate(
+    [
+      {
+        $unwind: "$friends" 
+      },
+      {
+        $lookup:
+        {
+          from:"users",
+          localField:"friends",
+          foreignField:"user_id",
+          as:"u"
+        }
+      },
+      {
+        $unwind:"$u"
+      }, 
+      { 
+        $project : 
+        { 
+          _id : 0,
+          u1:"$user_id",
+          u2:"$friends",
+          y1:"$YOB",
+          y2:"$u.YOB"
+        } 
+      },
+      {
+        $out : "friends_relation" 
+      }
+    ]
+  );
+  var res1=db.friends_relation.aggregate(
+    [
+      {
+        "$sort": { "y2": 1 } 
+      },
+      {
+        "$group": 
+        {
+            "_id": "$u1",
+            "age": { "$first": "$y2" },
+            "u2": { "$first": "$u2" }
+        }
+      }
+    ]
+  ).toArray();
+  var res2=db.friends_relation.aggregate(
+    [
+      {
+        "$sort": { "y1": 1 } 
+      },
+      {
+        "$group": 
+        {
+            "_id": "$u2",
+            "age": { "$first": "$y1" },
+            "u2": { "$first": "$u1" }
+        }
+      }
+    ]
+  ).toArray();
+  var result={};
+  var tmp={};
+  var res=res1.concat(res2);
+  res.forEach(
+    function(ele)
+    {
+      if(tmp[ele._id]==null)
+      	tmp[ele._id]={age:ele.age,ans:ele.u2};
+      else
+      {
+      	if(ele.age<tmp[ele._id].age)
+        	tmp[ele._id]={age:ele.age,ans:ele.u2};
+      }
+    }
+  );
+  Object.keys(tmp).forEach(
+    function(ele)
+    {
+      result[ele]=tmp[ele].ans;
+    }
+  );
+  return result
 }
