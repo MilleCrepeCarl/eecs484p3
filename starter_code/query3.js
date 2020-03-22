@@ -10,9 +10,8 @@
 
 function cities_table(dbname) {
     db = db.getSiblingDB(dbname);
-    // TODO: implemente cities collection here
-
-
-    // Returns nothing. Instead, it creates a collection inside the datbase.
-
+    db.createCollection("cities");
+    db.cities.insert(
+    	db.users.aggregate([{$group:{_id:"$current.city",users:{$addToSet:"$user_id"}}}]).toArray()
+    );
 }
