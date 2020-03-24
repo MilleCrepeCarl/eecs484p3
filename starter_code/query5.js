@@ -45,7 +45,7 @@ function oldest_friend(dbname){
   var res1=db.friends_relation.aggregate(
     [
       {
-        "$sort": { "y2": 1 } 
+        "$sort": { "y2": 1,"u2":1} 
       },
       {
         "$group": 
@@ -60,7 +60,7 @@ function oldest_friend(dbname){
   var res2=db.friends_relation.aggregate(
     [
       {
-        "$sort": { "y1": 1 } 
+        "$sort": { "y1": 1,"u1":1 } 
       },
       {
         "$group": 
@@ -82,7 +82,7 @@ function oldest_friend(dbname){
       	tmp[ele._id]={age:ele.age,ans:ele.u2};
       else
       {
-      	if(ele.age<tmp[ele._id].age)
+      	if((ele.age<tmp[ele._id].age)||(ele.age==tmp[ele._id].age)&&(ele.u2<tmp[ele._id].ans))
         	tmp[ele._id]={age:ele.age,ans:ele.u2};
       }
     }
